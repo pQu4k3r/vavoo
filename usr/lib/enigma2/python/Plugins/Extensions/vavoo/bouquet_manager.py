@@ -74,7 +74,6 @@ except ImportError:
 
 
 # Constants
-PLUGIN_PATH = PLUGIN_ROOT
 PLUGIN_PATH = resolveFilename(SCOPE_PLUGINS, "Extensions/{}".format('vavoo'))
 
 # Disable SSL warnings
@@ -82,15 +81,18 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_local_ip():
-    """Get the local IP address"""
+    """Get the local IP address (2s timeout to avoid blocking on restricted networks)."""
     try:
         import socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
+        s.settimeout(2)
+        try:
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
         return ip
-    except BaseException:
+    except Exception:
         return PROXY_HOST
 
 
